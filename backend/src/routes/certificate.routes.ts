@@ -2,12 +2,10 @@
  * Certificate Routes – request validation schemas and route definitions.
  *
  * Endpoints:
- *   GET /api/v1/certificates?creatorId=G...&limit=20&skip=0
- *     Returns a paginated list of certificates owned by the given Stellar address.
+ *   GET /api/v1/certificates?creatorId=<ObjectId>&limit=20&skip=0
+ *     Returns a paginated list of certificates owned by the given user.
  *
  * All Zod schemas are co-located with the routes that use them.
- * Regex follows the Stellar address specification:
- *   - Public keys → G + 55 base32 chars (Ed25519, 56 chars total)
  */
 import { Router } from "express";
 import { z } from "zod";
@@ -16,20 +14,12 @@ import { StatusCodes } from "http-status-codes";
 import { certificateController } from "../controllers/certificate.controller";
 
 // ---------------------------------------------------------------------------
-// Validation patterns
-// ---------------------------------------------------------------------------
-const STELLAR_PUBLIC_KEY_REGEX = /^G[A-Z2-7]{55}$/;
-
-// ---------------------------------------------------------------------------
 // Zod schema – query parameters for the certificate list endpoint
 // ---------------------------------------------------------------------------
 const listCertificatesQuerySchema = z.object({
   creatorId: z
     .string()
-    .regex(
-      STELLAR_PUBLIC_KEY_REGEX,
-      "creatorId must be a valid Stellar public key (G...)"
-    ),
+    .regex(/^[a-f\d]{24}$/i, "creatorId must be a valid MongoDB ObjectId"),
   limit: z
     .string()
     .optional()
@@ -72,8 +62,6 @@ function validateListCertificatesQuery(
     });
     return;
   }
-  // Overwrite req.query with the coerced + validated values so the controller
-  // receives already-parsed numbers rather than raw strings.
   req.query = result.data as unknown as typeof req.query;
   next();
 }
@@ -84,10 +72,10 @@ function validateListCertificatesQuery(
 const router = Router();
 
 /**
- * GET /api/v1/certificates?creatorId=G...&limit=20&skip=0
+ * GET /api/v1/certificates?creatorId=<ObjectId>&limit=20&skip=0
  *
  * Query parameters:
- *   - creatorId  (required) – Stellar G-address of the certificate owner.
+ *   - creatorId  (required) – MongoDB ObjectId of the certificate owner.
  *   - limit      (optional, 1–100, default 20) – page size.
  *   - skip       (optional, ≥0, default 0)     – offset for pagination.
  *

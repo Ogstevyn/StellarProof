@@ -1,17 +1,17 @@
 /**
  * Certificate Service – business logic for retrieving a user's certificate portfolio.
  *
- * Certificates are queried from MongoDB filtered by `creatorId` (the Stellar
- * public key of the certificate owner).
+ * Queries the Certificate collection filtered by `creatorId` (the MongoDB
+ * ObjectId of the certificate owner / user).
  *
- * Pagination is implemented with MongoDB `skip` / `limit` and a parallel
- * `countDocuments` call so callers always know the full result-set size.
+ * Pagination uses MongoDB `skip` / `limit` with a parallel `countDocuments`
+ * call so the caller always knows the full result-set size.
  */
 import { StatusCodes } from "http-status-codes";
-import { CertificateModel } from "../models/certificate.model";
+import mongoose from "mongoose";
+import Certificate from "../models/Certificate.model";
 import { AppError } from "../errors/AppError";
 import type {
-  ICertificate,
   ListCertificatesQuery,
   CertificateListResult,
 } from "../types/certificate.types";
@@ -20,13 +20,21 @@ import type {
  * Returns a paginated list of certificates belonging to the given creator.
  * Results are sorted newest-first (`createdAt` descending).
  *
- * @throws {AppError} 400 – if `limit` or `skip` values are out of range.
- * @throws {AppError} 404 – if the creator has no certificates.
+ * @throws {AppError} 400 – if `creatorId` is not a valid ObjectId.
+ * @throws {AppError} 400 – if `limit` or `skip` are out of range.
  */
 async function listCertificates(
   query: ListCertificatesQuery
 ): Promise<CertificateListResult> {
   const { creatorId, limit, skip } = query;
+
+  if (!mongoose.Types.ObjectId.isValid(creatorId)) {
+    throw new AppError(
+      "creatorId must be a valid MongoDB ObjectId",
+      StatusCodes.BAD_REQUEST,
+      "INVALID_CREATOR_ID"
+    );
+  }
 
   if (limit < 1 || limit > 100) {
     throw new AppError(
@@ -44,15 +52,15 @@ async function listCertificates(
     );
   }
 
-  const filter = { creatorId };
+  const filter = { creatorId: new mongoose.Types.ObjectId(creatorId) };
 
   const [certificates, total] = await Promise.all([
-    CertificateModel.find(filter)
+    Certificate.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean<ICertificate[]>(),
-    CertificateModel.countDocuments(filter),
+      .lean<Record<string, unknown>[]>(),
+    Certificate.countDocuments(filter),
   ]);
 
   return { certificates, total, limit, skip };
