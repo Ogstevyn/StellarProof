@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import healthRoutes from './routes/health.routes';
+import verificationRoutes from './routes/verification.routes';
+import { globalErrorHandler } from './middleware/errorHandler';
 
 // Load environment variables
 dotenv.config();
@@ -19,11 +21,15 @@ connectDB();
 
 // Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/v1/verify', verificationRoutes);
 
 // Base route
 app.get('/', (req: Request, res: Response) => {
   res.send('StellarProof Backend API is running');
 });
+
+// Global error handler — must be registered last
+app.use(globalErrorHandler);
 
 // Start the server
 app.listen(PORT, () => {
