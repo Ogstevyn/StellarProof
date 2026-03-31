@@ -90,11 +90,27 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isConnected || !publicKey) return;
-    setIsLoading(true);
-    verificationService
-      .getRequests(publicKey)
-      .then(setRequests)
-      .finally(() => setIsLoading(false));
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const next = await verificationService.getRequests(publicKey);
+        if (!cancelled) {
+          setRequests(next);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isConnected, publicKey]);
 
   const totalPages = useMemo(

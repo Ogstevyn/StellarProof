@@ -8,7 +8,7 @@
  */
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Copy,
   Check,
@@ -62,6 +62,8 @@ interface Particle {
   color: string;
   size: number;
   duration: number;
+  driftX: number;
+  borderRadius: number | "50%";
 }
 
 const CONFETTI_COLORS = [
@@ -73,20 +75,41 @@ const CONFETTI_COLORS = [
   "#fbbf24", // amber
 ];
 
-function generateParticles(count = 40): Particle[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: 40 + Math.random() * 20, // near center-top
-    y: 0,
-    angle: Math.random() * 360,
-    color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-    size: 6 + Math.random() * 6,
-    duration: 1.2 + Math.random() * 0.8,
-  }));
+function generateParticles(count = 40, seed = 0): Particle[] {
+  const rand = (seed: number) => {
+    const x = Math.sin(seed) * 10_000;
+    return x - Math.floor(x);
+  };
+
+  return Array.from({ length: count }, (_, i) => {
+    const base = 1013 + seed * 10_000 + i * 97;
+    const r1 = rand(base + 1);
+    const r2 = rand(base + 2);
+    const r3 = rand(base + 3);
+    const r4 = rand(base + 4);
+    const r5 = rand(base + 5);
+    const r6 = rand(base + 6);
+    const r7 = rand(base + 7);
+
+    return {
+      id: i,
+      x: 40 + r1 * 20,
+      y: 0,
+      angle: r2 * 360,
+      color: CONFETTI_COLORS[Math.floor(r3 * CONFETTI_COLORS.length)],
+      size: 6 + r4 * 6,
+      duration: 1.2 + r5 * 0.8,
+      driftX: (r6 - 0.5) * 30,
+      borderRadius: r7 > 0.5 ? "50%" : 2,
+    };
+  });
 }
 
-function Confetti() {
-  const particles = useRef(generateParticles()).current;
+function Confetti({ seed }: { seed: number }) {
+  const particles = useMemo(
+    () => generateParticles(40, seed),
+    [seed]
+  );
 
   return (
     <div
@@ -99,7 +122,7 @@ function Confetti() {
           initial={{ x: `${p.x}vw`, y: -10, opacity: 1, rotate: 0 }}
           animate={{
             y: "100vh",
-            x: `${p.x + (Math.random() - 0.5) * 30}vw`,
+            x: `${p.x + p.driftX}vw`,
             opacity: [1, 1, 0],
             rotate: p.angle,
           }}
@@ -108,7 +131,7 @@ function Confetti() {
             position: "absolute",
             width: p.size,
             height: p.size,
-            borderRadius: Math.random() > 0.5 ? "50%" : 2,
+            borderRadius: p.borderRadius,
             backgroundColor: p.color,
           }}
         />
@@ -351,7 +374,7 @@ export default function StatusStep({
       {/* Confetti on verified */}
       <AnimatePresence>
         {status === "verified" && (
-          <Confetti key={`confetti-${confettiKey}`} />
+          <Confetti key={`confetti-${confettiKey}`} seed={confettiKey} />
         )}
       </AnimatePresence>
 
