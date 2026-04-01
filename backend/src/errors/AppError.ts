@@ -9,7 +9,7 @@ export class AppError extends Error {
 
   constructor(message: string, statusCode: number, code?: string) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
     this.statusCode = statusCode;
     this.code = code;
     // Restore correct prototype chain for `instanceof` checks after transpile.
