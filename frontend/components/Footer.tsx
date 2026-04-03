@@ -36,7 +36,6 @@ function LogoIcon() {
 }
 
 export default function Footer() {
-  // Define theme‑dependent classes
   const bgGradient = "from-darkblue-dark via-darkblue to-darkblue-dark";
   const textPrimary = "text-white";
   const textSecondary = "text-gray-300";
