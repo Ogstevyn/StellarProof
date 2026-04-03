@@ -10,7 +10,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { env } from "./config/env";
 import rootRouter from "./routes";
-import { globalErrorHandler } from "./middleware/errorHandler";
+import { globalErrorHandler } from "./middlewares/errorHandler";
 
 export function createApp(): Application {
   const app = express();

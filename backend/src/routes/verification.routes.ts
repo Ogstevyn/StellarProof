@@ -3,7 +3,7 @@ import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
 
 import { verificationController } from "../controllers/verification.controller";
-import { validateBody, validateParams } from "../middleware/validate";
+import { validateBody, validateParams } from "../middlewares/validate";
 import { VerificationStatus } from "../types/verification.types";
 
 const STELLAR_PUBLIC_KEY_REGEX = /^G[A-Z2-7]{55}$/;
