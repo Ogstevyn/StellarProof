@@ -9,6 +9,7 @@ import verificationRoutes from "./verification.routes";
 import manifestRoutes from "./manifest.routes";
 import developerRoutes from "./developer.routes";
 import authRoutes from "./auth.routes";
+import userRoutes from "./user.routes";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/api/v1/spv/records", spvRoutes);
 router.use("/api/v1/verification/jobs", verificationRoutes);
 router.use("/api/v1/developer", developerRoutes);
 router.use("/api/v1/auth", authRoutes);
+router.use("/api/v1/users", userRoutes);
 
 export default router;
